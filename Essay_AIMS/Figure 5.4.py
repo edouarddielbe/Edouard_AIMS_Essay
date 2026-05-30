@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 import networkx as nx
 
-np.random.seed(42)
+np.random.seed(3)
 
 # Parameters
 gamma   = 0.1
@@ -26,15 +26,14 @@ D_mu0    = D_mu_vec[0]
 # Build Erdos-Renyi Network
 adjs, As, degrees_all = [], [], []
 for mu in range(M):
-    G   = nx.erdos_renyi_graph(N, k_avg/(N-1), seed=mu+42)
+    G   = nx.erdos_renyi_graph(N, k_avg/(N-1), seed=mu+3)
     A   = nx.to_numpy_array(G)
     adj = [list(G.neighbors(i)) for i in range(N)]
     deg = np.array([d for _, d in G.degree()])
     adjs.append(adj); As.append(A); degrees_all.append(deg)
 
 rho_A      = float(np.max(np.abs(np.linalg.eigvalsh(As[0]))))
-beta_c_IBM = (gamma + D_mu0) / (pi_mu0 * rho_A)
-print(f"beta_c IBM = {beta_c_IBM:.4f}")
+beta_c= (gamma + D_mu0) / (pi_mu0 * rho_A)
 
 # Gillespie
 def gillespie_final_size(beta, gamma, A_meta, M, N, adjs, T_max, seed=3):
@@ -79,7 +78,7 @@ def gillespie_final_size(beta, gamma, A_meta, M, N, adjs, T_max, seed=3):
     total_S = sum(np.sum(s == 0) for s in state)
     return 1.0 - total_S / (N * M)
 
-# IBM ODE
+#IBM ODE
 def ode_IBM_SIR(t, X, beta, gamma, N, M, As, L_meta):
     X = np.clip(X, 0.0, 1.0)
     dX = np.zeros(3 * N * M)
@@ -87,11 +86,11 @@ def ode_IBM_SIR(t, X, beta, gamma, N, M, As, L_meta):
         S_mu = X[mu*3*N : mu*3*N + N]
         I_mu = X[mu*3*N + N : mu*3*N + 2*N]
         infection = beta * S_mu * (As[mu] @ I_mu)
-        recovery  = gamma * I_mu
-        mig_S = sum(L_meta[mu,nu]*X[nu*3*N     : nu*3*N +   N] for nu in range(M))
+        recovery = gamma * I_mu
+        mig_S = sum(L_meta[mu,nu]*X[nu*3*N : nu*3*N + N] for nu in range(M))
         mig_I = sum(L_meta[mu,nu]*X[nu*3*N + N : nu*3*N + 2*N] for nu in range(M))
-        dX[mu*3*N      : mu*3*N +   N] = -infection - mig_S
-        dX[mu*3*N + N  : mu*3*N + 2*N] = +infection - recovery - mig_I
+        dX[mu*3*N : mu*3*N + N] = - infection - mig_S
+        dX[mu*3*N + N : mu*3*N + 2*N] = +infection - recovery - mig_I
         dX[mu*3*N + 2*N: mu*3*N + 3*N] = +recovery
     return dX
 
@@ -105,10 +104,8 @@ def IBM_final_size(beta, gamma, N, M, As, L_meta, T_max):
     total_S = sum(sol.y[mu*3*N : mu*3*N + N, -1].sum() for mu in range(M))
     return 1.0 - total_S / (N * M)
 
-# Loop
 fs_gil = []
 fs_ibm = []
-
 for beta in beta_values:
     print(f"beta={beta:.4f} ...", end=' ', flush=True)
     fs_gil.append(gillespie_final_size(beta, gamma, A_meta, M, N, adjs, T_max, seed=3))
@@ -118,12 +115,12 @@ for beta in beta_values:
 fs_gil = np.array(fs_gil)
 fs_ibm = np.array(fs_ibm)
 
-# Find empirical beta_c from Gillespie
+# WE Find the empirical beta_G from Gillespie
 threshold  = 0.05
-beta_c_Gil = None
+beta_G = None
 for i in range(len(beta_values)-1):
     if fs_gil[i] < threshold and fs_gil[i+1] >= threshold:
-        beta_c_Gil = beta_values[i]
+        beta_G = beta_values[i]
         break
 
 # Figure
@@ -132,18 +129,17 @@ ax.plot(beta_values, fs_gil, color='#16a34a', lw=2.5, marker='o',
         markersize=5, label='Gillespie')
 ax.plot(beta_values, fs_ibm, color='#2563eb', lw=2.0, ls='--', marker='s',
         markersize=5, label='IBM')
-ax.axvline(beta_c_IBM, color='#2563eb', lw=1.2, ls=':',
-           label=f'$\\beta_c^{{IBM}} = {beta_c_IBM:.3f}$ (theoretical)')
-if beta_c_Gil is not None:
-    ax.axvline(beta_c_Gil, color='#16a34a', lw=1.2, ls=':',
-               label=f'$\\beta_c^{{Gil}} \\approx {beta_c_Gil:.3f}$ (empirical)')
+ax.axvline(beta_c, color='#2563eb', lw=1.2, ls=':',
+           label=f'$\\beta_c = {beta_c:.3f}$')
+if beta_G is not None:
+    ax.axvline(beta_G, color='#16a34a', lw=1.2, ls=':',
+               label=f'$\\beta_G \\approx {beta_G:.3f}$')
 
 ax.set_xlabel(r'Transmission rate $\beta$', fontsize=12)
-ax.set_ylabel(r'$1 - S(\infty)/N$', fontsize=12)
+ax.set_ylabel(r'$1-S$', fontsize=12)
 ax.legend(fontsize=9, facecolor='white', edgecolor='#cccccc')
 ax.grid(True, alpha=0.3)
 ax.set_xlim(beta_values[0], beta_values[-1])
 ax.set_ylim(-0.02, 1.05)
-plt.tight_layout()
 plt.savefig('Figure 5.4.png')
 plt.show()
