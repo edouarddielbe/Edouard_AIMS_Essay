@@ -138,7 +138,6 @@ for mu in range(M):
     adjs.append(adj); As.append(A)
     degrees_all.append(deg); p_ks.append(pk)
 
-#Loop
 t_eval = np.linspace(0, T_max, 2000)
 t_fine = np.linspace(0, T_max, 1000)
 results = []
@@ -165,8 +164,7 @@ for beta in beta_list:
                         method='RK45', max_step=0.5)
     I_IBM = np.array([sol_IBM.y[mu*3*N + N : mu*3*N + 2*N].mean(axis=0)
                       for mu in range(M)])
-
-    print("  HMF ODE...")
+ 
     sol_HMF = solve_ivp(ode_HMF_SIR, [0, T_max], X0_HMF, t_eval=t_eval,
                         args=(beta, gamma, M, D_mu_vec, A_meta, patch_info, total_HMF),
                         method='RK45', max_step=0.5)
