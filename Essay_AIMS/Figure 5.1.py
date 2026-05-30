@@ -234,5 +234,5 @@ for res in results:
 for ax in axes:
     ax.legend(fontsize=7, loc='upper right',facecolor='white', edgecolor='#cccccc', framealpha=0.9)
 
-plt.savefig('BA_vary_beta.png')
+plt.savefig('Figure 5.1.png')
 plt.show()
