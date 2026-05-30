@@ -221,5 +221,5 @@ for ki, res in enumerate(results):
 for ax in axes:
     ax.legend(fontsize=7, loc='upper right',facecolor='white', edgecolor='#cccccc', framealpha=0.9)
 
-plt.savefig('metaplex_vary_k_labeled.png')
+plt.savefig('Figure 5.2.png')
 plt.show()
