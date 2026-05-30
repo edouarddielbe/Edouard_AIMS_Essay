@@ -98,7 +98,6 @@ def run_IBM(beta, gamma, N, M, As, L_meta, T_max):
                     args=(beta, gamma, N, M, As, L_meta),method='RK45',  max_step=0.5)
     return sol.t, np.array([sol.y[mu*3*N+N : mu*3*N+2*N].mean(axis=0) for mu in range(M)]).mean(axis=0)
 
-#Loop
 k_vals = []; rmse_vals = []
 for k_avg in k_avg_values:
     adjs, As = [], []
@@ -113,8 +112,7 @@ for k_avg in k_avg_values:
 
 #Figure
 plt.figure(figsize=(14, 7))
-plt.plot(k_vals, np.log10(rmse_vals), 'bo-', lw=2.5, markersize=8,
-markerfacecolor='white', markeredgewidth=2)
+plt.plot(k_vals, np.log10(rmse_vals), 'bo-', lw=2.5, markersize=8,markerfacecolor='white', markeredgewidth=2)
 plt.xlabel(r'Mean degree $\langle k \rangle$', fontsize=12)
 plt.ylabel(r'$\log_{10}[RSME(Gillespie - IBM)]$', fontsize=12)
 plt.grid(True, alpha=0.3)
